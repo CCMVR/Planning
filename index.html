@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,11 +11,24 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -22,45 +36,61 @@
             background-color: #e5e7eb;
             border: 1px solid #e5e7eb;
         }
+
         .calendar-cell {
             background-color: white;
-            min-height: 150px; /* Agrandissement de la cellule */
-            height: auto; /* Permet l'extension si beaucoup d'événements */
+            min-height: 150px;
+            /* Agrandissement de la cellule */
+            height: auto;
+            /* Permet l'extension si beaucoup d'événements */
             padding: 0.5rem;
             display: flex;
             flex-direction: column;
         }
+
         @media (max-width: 768px) {
-            .calendar-cell { min-height: 100px; padding: 0.25rem; }
-            .event-pill { font-size: 0.65rem; padding: 0.1rem 0.25rem; }
+            .calendar-cell {
+                min-height: 100px;
+                padding: 0.25rem;
+            }
+
+            .event-pill {
+                font-size: 0.65rem;
+                padding: 0.1rem 0.25rem;
+            }
         }
+
         .event-pill {
             font-size: 0.75rem;
             padding: 0.25rem 0.5rem;
             margin-bottom: 0.25rem;
             border-radius: 0.25rem;
             cursor: pointer;
-            white-space: normal; /* Autorise le retour à la ligne */
+            white-space: normal;
+            /* Autorise le retour à la ligne */
             word-break: break-word;
             color: white;
             font-weight: 500;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
             transition: transform 0.1s;
             line-height: 1.2;
         }
+
         .event-pill:hover {
             transform: scale(1.02);
         }
-        
+
         /* Loading Overlay */
         #loader {
             display: none;
         }
+
         #loader.active {
             display: flex;
         }
     </style>
 </head>
+
 <body class="bg-gray-50 text-gray-800 font-sans h-screen flex flex-col overflow-hidden relative">
 
     <!-- Supabase Loading Overlay -->
@@ -70,31 +100,39 @@
     </div>
 
     <!-- Header -->
-    <header class="bg-white shadow-sm z-10 p-4 flex flex-wrap justify-between items-center gap-4 border-b border-gray-200">
+    <header
+        class="bg-white shadow-sm z-10 p-4 flex flex-wrap justify-between items-center gap-4 border-b border-gray-200">
         <div class="flex items-center gap-4">
             <h1 class="text-xl md:text-2xl font-bold text-indigo-700">
                 <i class="fa-regular fa-calendar-days mr-2"></i>Planning Collectivité
             </h1>
-            <span id="role-badge" class="hidden px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-bold uppercase tracking-wide">Public</span>
+            <span id="role-badge"
+                class="hidden px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-bold uppercase tracking-wide">Public</span>
         </div>
-        
+
         <div class="flex items-center gap-3 md:gap-6">
             <div class="flex items-center gap-2">
-                <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded-full transition"><i class="fa-solid fa-chevron-left"></i></button>
-                <h2 id="current-month-display" class="text-lg md:text-xl font-semibold w-40 text-center capitalize">Janvier 2026</h2>
-                <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 rounded-full transition"><i class="fa-solid fa-chevron-right"></i></button>
+                <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded-full transition"><i
+                        class="fa-solid fa-chevron-left"></i></button>
+                <h2 id="current-month-display" class="text-lg md:text-xl font-semibold w-40 text-center capitalize">
+                    Janvier 2026</h2>
+                <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 rounded-full transition"><i
+                        class="fa-solid fa-chevron-right"></i></button>
             </div>
-            
+
             <div class="flex items-center gap-2">
                 <!-- Bouton Accès Partenaires visible -->
-                <button id="btn-login-trigger" onclick="openLoginModal()" class="bg-gray-100 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 px-3 py-2 rounded-md text-sm font-medium transition shadow-sm border border-gray-200">
+                <button id="btn-login-trigger" onclick="openLoginModal()"
+                    class="bg-gray-100 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 px-3 py-2 rounded-md text-sm font-medium transition shadow-sm border border-gray-200">
                     <i class="fa-solid fa-user-lock mr-1"></i> Espace Pro
                 </button>
                 <!-- Bouton Quitter (1 clic) -->
-                <button id="btn-quick-logout" onclick="logout()" class="hidden bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700 px-3 py-2 rounded-md text-sm font-medium transition shadow-sm border border-gray-200">
+                <button id="btn-quick-logout" onclick="logout()"
+                    class="hidden bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700 px-3 py-2 rounded-md text-sm font-medium transition shadow-sm border border-gray-200">
                     <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> Quitter
                 </button>
-                <button id="btn-add-event" onclick="openEventForm()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition shadow-sm">
+                <button id="btn-add-event" onclick="openEventForm()"
+                    class="hidden bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition shadow-sm">
                     <i class="fa-solid fa-plus mr-1"></i> Nouvelle Activité
                 </button>
             </div>
@@ -102,7 +140,8 @@
     </header>
 
     <!-- Quick Filters Bar -->
-    <div class="bg-white shadow-sm z-10 py-2 px-4 overflow-x-auto whitespace-nowrap flex gap-2 items-center" id="quick-filters">
+    <div class="bg-white shadow-sm z-10 py-2 px-4 overflow-x-auto whitespace-nowrap flex gap-2 items-center"
+        id="quick-filters">
         <!-- Buttons generated by JS -->
     </div>
 
@@ -127,14 +166,17 @@
     </main>
 
     <!-- 0. Modal de bienvenue (Choix du filtre) -->
-    <div id="modal-welcome" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex items-center justify-center z-[60] transition-opacity">
+    <div id="modal-welcome"
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex items-center justify-center z-[60] transition-opacity">
         <div class="bg-white rounded-xl shadow-xl p-6 md:p-8 max-w-lg w-full mx-4 transform transition-all text-center">
-            <h2 class="text-2xl font-bold text-indigo-700 mb-2"><i class="fa-solid fa-calendar-check mr-2"></i>Bienvenue sur le planning</h2>
+            <h2 class="text-2xl font-bold text-indigo-700 mb-2"><i class="fa-solid fa-calendar-check mr-2"></i>Bienvenue
+                sur le planning</h2>
             <p class="text-gray-600 mb-6">Pour commencer, quel planning souhaitez-vous consulter ?</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="welcome-options">
                 <!-- Options générées par JS -->
             </div>
-            <p class="text-xs text-gray-400 mt-6">Vous pourrez modifier ce choix à tout moment via la barre de filtres.</p>
+            <p class="text-xs text-gray-400 mt-6">Vous pourrez modifier ce choix à tout moment via la barre de filtres.
+            </p>
         </div>
     </div>
 
@@ -145,41 +187,50 @@
         <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold text-gray-800">Accès Restreint</h3>
-                <button onclick="closeModal('modal-login')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button onclick="closeModal('modal-login')" class="text-gray-400 hover:text-gray-600"><i
+                        class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Identifiant</label>
-                    <input type="text" id="login-id" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="text" id="login-id"
+                        class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
-                    <input type="password" id="login-pwd" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="password" id="login-pwd"
+                        class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 <div id="login-error" class="text-red-500 text-sm hidden">Identifiant ou mot de passe incorrect.</div>
-                <button onclick="handleLogin()" class="w-full bg-indigo-600 text-white font-medium py-2 rounded-md hover:bg-indigo-700 transition">Se connecter</button>
+                <button onclick="handleLogin()"
+                    class="w-full bg-indigo-600 text-white font-medium py-2 rounded-md hover:bg-indigo-700 transition">Se
+                    connecter</button>
             </div>
         </div>
     </div>
 
     <!-- 2. Event Form Modal (Association / Admin) -->
-    <div id="modal-event" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50 overflow-y-auto pt-10 pb-10">
+    <div id="modal-event"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50 overflow-y-auto pt-10 pb-10">
         <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-gray-800" id="event-form-title">Nouvelle Activité</h3>
-                <button onclick="closeModal('modal-event')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button onclick="closeModal('modal-event')" class="text-gray-400 hover:text-gray-600"><i
+                        class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <form id="form-event" onsubmit="saveEvent(event)" class="space-y-4">
                 <input type="hidden" id="ev-id">
-                
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nom de la structure *</label>
-                    <input type="text" id="ev-structure" required placeholder="Ex: Centre de loisirs Oxygen" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="text" id="ev-structure" required placeholder="Ex: Centre de loisirs Oxygen"
+                        class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
-                
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Tranche d'âge *</label>
-                    <select id="ev-age" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <select id="ev-age" required
+                        class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">Sélectionner...</option>
                         <option value="0-6 ans">0-6 ans</option>
                         <option value="3-6 ans">3-6 ans</option>
@@ -193,64 +244,79 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nom de l'action *</label>
-                    <input type="text" id="ev-action" required placeholder="Ex: Sortie accrobranche" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="text" id="ev-action" required placeholder="Ex: Sortie accrobranche"
+                        class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Description courte (publique)</label>
-                    <textarea id="ev-description" rows="2" placeholder="Quelques mots sur l'activité..." class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                    <textarea id="ev-description" rows="2" placeholder="Quelques mots sur l'activité..."
+                        class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Date de début *</label>
-                        <input type="date" id="ev-start-date" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="date" id="ev-start-date" required
+                            class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Heure de début *</label>
-                        <input type="time" id="ev-start-time" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="time" id="ev-start-time" required
+                            class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Date de fin *</label>
-                        <input type="date" id="ev-end-date" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="date" id="ev-end-date" required
+                            class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Heure de fin *</label>
-                        <input type="time" id="ev-end-time" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="time" id="ev-end-time" required
+                            class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                 </div>
 
                 <div class="pt-4 flex justify-end gap-3 border-t">
-                    <button type="button" onclick="closeModal('modal-event')" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Annuler</button>
-                    <button type="submit" class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Enregistrer</button>
+                    <button type="button" onclick="closeModal('modal-event')"
+                        class="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Annuler</button>
+                    <button type="submit"
+                        class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Enregistrer</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- 3. Event Details Modal (Public, Admin) -->
-    <div id="modal-details" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div id="modal-details"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
             <div class="flex justify-between items-start mb-4">
                 <h3 class="text-xl font-bold text-gray-800 pr-4" id="det-action">Nom de l'action</h3>
-                <button onclick="closeModal('modal-details')" class="text-gray-400 hover:text-gray-600 mt-1"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button onclick="closeModal('modal-details')" class="text-gray-400 hover:text-gray-600 mt-1"><i
+                        class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-            
+
             <div class="space-y-3 text-sm text-gray-600 mb-6">
-                <p><i class="fa-solid fa-building w-5 text-indigo-500"></i> <strong class="text-gray-800">Structure:</strong> <span id="det-structure"></span></p>
-                <p><i class="fa-solid fa-users w-5 text-indigo-500"></i> <strong class="text-gray-800">Public visé:</strong> <span id="det-age"></span></p>
-                <p><i class="fa-solid fa-clock w-5 text-indigo-500"></i> <strong class="text-gray-800">Période:</strong> <span id="det-time"></span></p>
-                
+                <p><i class="fa-solid fa-building w-5 text-indigo-500"></i> <strong
+                        class="text-gray-800">Structure:</strong> <span id="det-structure"></span></p>
+                <p><i class="fa-solid fa-users w-5 text-indigo-500"></i> <strong class="text-gray-800">Public
+                        visé:</strong> <span id="det-age"></span></p>
+                <p><i class="fa-solid fa-clock w-5 text-indigo-500"></i> <strong class="text-gray-800">Période:</strong>
+                    <span id="det-time"></span>
+                </p>
+
                 <div id="det-desc-section" class="mt-3 p-3 bg-gray-50 rounded border border-gray-100 hidden">
                     <strong class="text-gray-800 block mb-1">Description:</strong>
                     <span id="det-description" class="whitespace-pre-wrap"></span>
                 </div>
 
                 <div id="det-bilan-section" class="mt-4 pt-4 border-t border-gray-100 hidden">
-                    <h4 class="font-bold text-gray-800 mb-2"><i class="fa-solid fa-chart-pie text-green-600 mr-1"></i> Bilan de l'action (Interne)</h4>
+                    <h4 class="font-bold text-gray-800 mb-2"><i class="fa-solid fa-chart-pie text-green-600 mr-1"></i>
+                        Bilan de l'action (Interne)</h4>
                     <p><strong>Public touché:</strong> <span id="det-public-count">-</span></p>
                     <p><strong>Partenaires:</strong> <span id="det-partners">-</span></p>
                     <p><strong>Évaluation:</strong> <span id="det-evaluation">-</span>/10</p>
@@ -258,12 +324,20 @@
             </div>
 
             <div id="det-admin-actions" class="hidden pt-4 border-t border-gray-200 flex flex-wrap gap-2 justify-end">
-                <button onclick="editEvent()" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 text-sm font-medium"><i class="fa-solid fa-pen mr-1"></i> Modifier</button>
-                <button onclick="clearBilan()" class="px-3 py-1.5 bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 text-sm font-medium"><i class="fa-solid fa-eraser mr-1"></i> Effacer Bilan</button>
-                <button onclick="deleteEvent()" class="px-3 py-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm font-medium"><i class="fa-solid fa-trash mr-1"></i> Supprimer</button>
+                <button onclick="editEvent()"
+                    class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 text-sm font-medium"><i
+                        class="fa-solid fa-pen mr-1"></i> Modifier</button>
+                <button onclick="clearBilan()"
+                    class="px-3 py-1.5 bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 text-sm font-medium"><i
+                        class="fa-solid fa-eraser mr-1"></i> Effacer Bilan</button>
+                <button onclick="deleteEvent()"
+                    class="px-3 py-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm font-medium"><i
+                        class="fa-solid fa-trash mr-1"></i> Supprimer</button>
             </div>
             <div id="det-bilan-actions" class="hidden pt-4 border-t border-gray-200 flex justify-end">
-                <button onclick="openBilanForm()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium"><i class="fa-solid fa-clipboard-check mr-1"></i> Renseigner le bilan</button>
+                <button onclick="openBilanForm()"
+                    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium"><i
+                        class="fa-solid fa-clipboard-check mr-1"></i> Renseigner le bilan</button>
             </div>
         </div>
     </div>
@@ -273,37 +347,47 @@
         <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-gray-800">Bilan de l'action</h3>
-                <button onclick="closeModal('modal-bilan')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button onclick="closeModal('modal-bilan')" class="text-gray-400 hover:text-gray-600"><i
+                        class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <p class="text-sm text-gray-500 mb-4" id="bilan-action-name">Action: ...</p>
             <form id="form-bilan" onsubmit="saveBilan(event)" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Public touché (nombre)</label>
-                    <input type="number" id="bilan-count" min="0" class="w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500">
+                    <input type="number" id="bilan-count" min="0"
+                        class="w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Partenaires de l'action</label>
-                    <textarea id="bilan-partners" rows="2" class="w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500" placeholder="Noms des partenaires..."></textarea>
+                    <textarea id="bilan-partners" rows="2"
+                        class="w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500"
+                        placeholder="Noms des partenaires..."></textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Évaluation (0 à 10)</label>
-                    <input type="number" id="bilan-eval" min="0" max="10" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500">
+                    <input type="number" id="bilan-eval" min="0" max="10" required
+                        class="w-full border border-gray-300 rounded-md p-2 focus:ring-green-500 focus:border-green-500">
                 </div>
                 <div class="pt-4 flex justify-end gap-3 border-t">
-                    <button type="button" onclick="closeModal('modal-bilan')" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Annuler</button>
-                    <button type="submit" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Valider le bilan</button>
+                    <button type="button" onclick="closeModal('modal-bilan')"
+                        class="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Annuler</button>
+                    <button type="submit"
+                        class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Valider le
+                        bilan</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Alert / Message Box -->
-    <div id="message-box" class="fixed top-4 right-4 bg-white border-l-4 rounded shadow-lg p-4 transform transition-transform translate-x-full z-[100] max-w-sm flex items-center justify-between">
+    <div id="message-box"
+        class="fixed top-4 right-4 bg-white border-l-4 rounded shadow-lg p-4 transform transition-transform translate-x-full z-[100] max-w-sm flex items-center justify-between">
         <div class="flex items-center">
             <i id="msg-icon" class="mr-3 text-lg"></i>
             <span id="msg-text" class="text-gray-800 text-sm font-medium"></span>
         </div>
-        <button onclick="closeMessage()" class="ml-4 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        <button onclick="closeMessage()" class="ml-4 text-gray-400 hover:text-gray-600"><i
+                class="fa-solid fa-xmark"></i></button>
     </div>
 
     <script>
@@ -337,11 +421,11 @@
         window.onload = async () => {
             renderQuickFilters();
             renderWelcomeOptions();
-            
+
             if (!state.filter) {
                 document.getElementById('modal-welcome').classList.remove('hidden');
             }
-            
+
             await loadEventsFromDB();
         };
 
@@ -358,9 +442,9 @@
                     .select('*')
                     .order('start_date', { ascending: true })
                     .order('start_time', { ascending: true });
-                
+
                 if (error) throw error;
-                
+
                 // Mapper les données de la base vers le format d'état du frontend
                 state.events = data.map(dbEvent => ({
                     id: dbEvent.id,
@@ -377,7 +461,7 @@
                     partners: dbEvent.partners,
                     evaluation: dbEvent.evaluation
                 }));
-                
+
                 updateUI();
             } catch (err) {
                 console.error(err);
@@ -422,9 +506,9 @@
             const btnAdd = document.getElementById('btn-add-event');
             const btnLogout = document.getElementById('btn-quick-logout');
             const btnLogin = document.getElementById('btn-login-trigger');
-            
+
             roleBadge.classList.remove('hidden', 'bg-gray-200', 'bg-blue-200', 'bg-green-200', 'bg-red-200');
-            
+
             if (state.role === 'admin') {
                 roleBadge.textContent = 'Admin';
                 roleBadge.classList.add('bg-red-200', 'text-red-800');
@@ -465,25 +549,25 @@
         function renderCalendar() {
             const body = document.getElementById('calendar-body');
             body.innerHTML = '';
-            
+
             const year = state.currentDate.getFullYear();
             const month = state.currentDate.getMonth();
-            
+
             const firstDay = new Date(year, month, 1);
             let startDayOfWeek = firstDay.getDay() - 1;
-            if (startDayOfWeek === -1) startDayOfWeek = 6; 
-            
+            if (startDayOfWeek === -1) startDayOfWeek = 6;
+
             const daysInMonth = getDaysInMonth(year, month);
-            
+
             for (let i = 0; i < startDayOfWeek; i++) {
                 body.appendChild(createCell(null));
             }
-            
+
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 body.appendChild(createCell(day, dateStr));
             }
-            
+
             const totalCells = startDayOfWeek + daysInMonth;
             const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
             for (let i = 0; i < remaining; i++) {
@@ -494,11 +578,11 @@
         function createCell(dayNumber, dateStr) {
             const cell = document.createElement('div');
             cell.className = 'calendar-cell';
-            
+
             if (dayNumber) {
                 const dayLabel = document.createElement('div');
                 dayLabel.className = 'text-right text-sm font-semibold text-gray-700 mb-1';
-                
+
                 const today = new Date();
                 if (today.getDate() === dayNumber && today.getMonth() === state.currentDate.getMonth() && today.getFullYear() === state.currentDate.getFullYear()) {
                     dayLabel.innerHTML = `<span class="bg-indigo-600 text-white rounded-full w-6 h-6 inline-flex items-center justify-center">${dayNumber}</span>`;
@@ -506,19 +590,19 @@
                     dayLabel.textContent = dayNumber;
                 }
                 cell.appendChild(dayLabel);
-                
+
                 const dayEvents = getEventsForDate(dateStr);
                 dayEvents.forEach(evt => {
                     const pill = document.createElement('div');
                     const groupConfig = AGE_GROUPS.find(g => g.id === evt.ageGroup);
                     const colorClass = groupConfig ? groupConfig.color : 'bg-gray-500';
-                    
+
                     pill.className = `event-pill ${colorClass}`;
                     pill.title = `${evt.structure} : ${evt.action}`;
-                    
+
                     const hasBilan = evt.evaluation !== null && evt.evaluation !== "";
                     const icon = hasBilan ? '<i class="fa-solid fa-check-circle text-[10px] mr-1 opacity-80"></i>' : '';
-                    
+
                     // Affichage ergonomique de l'heure et du texte
                     pill.innerHTML = `
                         <div class="flex items-start gap-1">
@@ -529,18 +613,18 @@
                             </div>
                         </div>
                     `;
-                    
+
                     pill.onclick = (e) => {
                         e.stopPropagation();
                         openEventDetails(evt.id);
                     };
-                    
+
                     cell.appendChild(pill);
                 });
             } else {
                 cell.classList.add('bg-gray-50');
             }
-            
+
             return cell;
         }
 
@@ -557,26 +641,26 @@
         function renderQuickFilters() {
             const container = document.getElementById('quick-filters');
             container.innerHTML = '';
-            
+
             const allOptions = [{ id: 'tous', label: 'Tous les plannings', color: 'bg-gray-700' }, ...AGE_GROUPS];
-            
+
             allOptions.forEach(opt => {
                 const btn = document.createElement('button');
                 const isActive = state.filter === opt.id;
-                
+
                 // Styles différenciés pour le filtre actif
                 const baseClass = `inline-flex items-center px-4 py-1.5 rounded-full text-white text-sm font-medium transition-all shadow-sm ${opt.color}`;
                 const activeClass = isActive ? 'ring-2 ring-offset-2 ring-indigo-500 scale-105 opacity-100' : 'opacity-70 hover:opacity-100';
-                
+
                 btn.className = `${baseClass} ${activeClass}`;
                 btn.innerHTML = isActive ? `<i class="fa-solid fa-check mr-2"></i> ${opt.label}` : opt.label;
-                
+
                 btn.onclick = () => {
                     state.filter = opt.id;
                     renderQuickFilters(); // Mettre à jour l'apparence des boutons
                     updateUI(); // Mettre à jour le calendrier
                 };
-                
+
                 container.appendChild(btn);
             });
         }
@@ -584,10 +668,10 @@
         function renderWelcomeOptions() {
             const container = document.getElementById('welcome-options');
             container.innerHTML = '';
-            
+
             // On reprend les couleurs mais on les adapte pour les gros boutons
-            const allOptions = [{ id: 'tous', label: 'Voir tous les plannings', color: 'bg-indigo-600 text-white' }, ...AGE_GROUPS.map(g => ({...g, color: g.color + ' text-white'}))];
-            
+            const allOptions = [{ id: 'tous', label: 'Voir tous les plannings', color: 'bg-indigo-600 text-white' }, ...AGE_GROUPS.map(g => ({ ...g, color: g.color + ' text-white' }))];
+
             allOptions.forEach(opt => {
                 const btn = document.createElement('button');
                 btn.className = `w-full text-left px-4 py-3 rounded-lg border border-transparent hover:opacity-90 focus:outline-none transition flex items-center shadow-md ${opt.color}`;
@@ -610,21 +694,39 @@
             document.getElementById('login-pwd').value = '';
         }
 
-        function handleLogin() {
+        async function handleLogin() {
             const id = document.getElementById('login-id').value.trim();
             const pwd = document.getElementById('login-pwd').value.trim();
-            
+            document.getElementById('login-error').classList.add('hidden');
+
             if (id === 'association' && pwd === 'CCMVR2025') {
                 state.role = 'asso';
                 finishLogin();
             } else if (id === 'bilan' && pwd === 'BILAN2026') {
                 state.role = 'bilan';
                 finishLogin();
-            } else if (id === 'admin' && pwd === 'MAJA') {
-                state.role = 'admin';
-                finishLogin();
+            } else if (id === 'admin') {
+                showLoader(true);
+                try {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({
+                        email: 'admin@ccmvr.fr',
+                        password: pwd
+                    });
+
+                    if (error) throw error;
+
+                    state.role = 'admin';
+                    finishLogin();
+                } catch (err) {
+                    console.error("Login admin error:", err);
+                    document.getElementById('login-error').classList.remove('hidden');
+                    document.getElementById('login-error').textContent = "Identifiant ou mot de passe incorrect.";
+                } finally {
+                    showLoader(false);
+                }
             } else {
                 document.getElementById('login-error').classList.remove('hidden');
+                document.getElementById('login-error').textContent = "Identifiant ou mot de passe incorrect.";
             }
         }
 
@@ -634,7 +736,10 @@
             updateUI();
         }
 
-        function logout() {
+        async function logout() {
+            if (state.role === 'admin') {
+                try { await supabaseClient.auth.signOut(); } catch (e) { }
+            }
             state.role = 'public';
             showMessage("Déconnexion réussie. Mode public activé.", "info");
             updateUI();
@@ -650,7 +755,7 @@
             state.selectedEventId = eventId;
             const title = document.getElementById('event-form-title');
             const form = document.getElementById('form-event');
-            
+
             if (eventId) {
                 title.textContent = "Modifier l'activité";
                 const evt = state.events.find(e => e.id === eventId);
@@ -674,16 +779,16 @@
                 document.getElementById('ev-start-date').value = ds;
                 document.getElementById('ev-end-date').value = ds;
             }
-            
+
             closeModal('modal-details');
             document.getElementById('modal-event').classList.remove('hidden');
         }
 
         async function saveEvent(e) {
             e.preventDefault();
-            
+
             const id = document.getElementById('ev-id').value;
-            
+
             // Construit l'objet à partir du formulaire
             const newEvent = {
                 structure: document.getElementById('ev-structure').value,
@@ -713,7 +818,7 @@
 
             const dbPayload = mapToDBFormat(newEvent);
             showLoader(true);
-            
+
             try {
                 if (id) {
                     // Modification
@@ -744,7 +849,7 @@
             document.getElementById('det-action').textContent = evt.action;
             document.getElementById('det-structure').textContent = evt.structure;
             document.getElementById('det-age').textContent = evt.ageGroup;
-            
+
             const startStr = formatDateFR(evt.startDate) + ' ' + evt.startTime;
             const endStr = evt.startDate === evt.endDate ? evt.endTime : (formatDateFR(evt.endDate) + ' ' + evt.endTime);
             document.getElementById('det-time').textContent = `Du ${startStr} au ${endStr}`;
@@ -771,7 +876,7 @@
 
             const adminActions = document.getElementById('det-admin-actions');
             const bilanActions = document.getElementById('det-bilan-actions');
-            
+
             adminActions.classList.add('hidden');
             bilanActions.classList.add('hidden');
 
@@ -820,7 +925,7 @@
             try {
                 const { error } = await supabaseClient.from('planning_events').update(updateData).eq('id', evt.id);
                 if (error) throw error;
-                
+
                 showMessage("Bilan enregistré avec succès", "success");
                 closeModal('modal-bilan');
                 await loadEventsFromDB();
@@ -841,7 +946,7 @@
             try {
                 const { error } = await supabaseClient.from('planning_events').delete().eq('id', state.selectedEventId);
                 if (error) throw error;
-                
+
                 showMessage("Activité supprimée avec succès", "info");
                 closeModal('modal-details');
                 await loadEventsFromDB();
@@ -858,7 +963,7 @@
                 const updateData = { public_reached: null, partners: null, evaluation: null };
                 const { error } = await supabaseClient.from('planning_events').update(updateData).eq('id', state.selectedEventId);
                 if (error) throw error;
-                
+
                 showMessage("Bilan effacé", "info");
                 closeModal('modal-details');
                 await loadEventsFromDB();
@@ -871,9 +976,9 @@
 
         // --- UTILS ---
         function formatDateFR(dateStr) {
-            if(!dateStr) return '';
+            if (!dateStr) return '';
             const parts = dateStr.split('-');
-            if(parts.length !== 3) return dateStr;
+            if (parts.length !== 3) return dateStr;
             const [y, m, d] = parts;
             return `${d}/${m}/${y}`;
         }
@@ -883,12 +988,12 @@
             const box = document.getElementById('message-box');
             const icon = document.getElementById('msg-icon');
             const msgText = document.getElementById('msg-text');
-            
+
             msgText.textContent = text;
-            
+
             box.className = "fixed top-4 right-4 bg-white border-l-4 rounded shadow-lg p-4 transform transition-transform z-[100] max-w-sm flex items-center justify-between";
             icon.className = "mr-3 text-lg";
-            
+
             if (type === "success") {
                 box.classList.add("border-green-500");
                 icon.classList.add("fa-solid", "fa-circle-check", "text-green-500");
@@ -901,7 +1006,7 @@
             }
 
             box.classList.remove("translate-x-full");
-            
+
             clearTimeout(messageTimeout);
             messageTimeout = setTimeout(() => {
                 closeMessage();
@@ -913,4 +1018,5 @@
         }
     </script>
 </body>
+
 </html>

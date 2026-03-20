@@ -239,7 +239,14 @@
                         <option value="adulte">Adulte</option>
                         <option value="parentalité">Parentalité</option>
                         <option value="vie associative">Vie associative</option>
+                        <option value="tous">Tous</option>
                     </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Lien inscription / plus d'infos</label>
+                    <input type="url" id="ev-link" placeholder="https://..."
+                        class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
 
                 <div id="recurrence-section">
@@ -290,12 +297,12 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Date de fin *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
                         <input type="date" id="ev-end-date" required
                             class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Heure de fin *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Heure de fin</label>
                         <input type="time" id="ev-end-time" required
                             class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
@@ -333,6 +340,11 @@
                 <div id="det-desc-section" class="mt-3 p-3 bg-gray-50 rounded border border-gray-100 hidden">
                     <strong class="text-gray-800 block mb-1">Description:</strong>
                     <span id="det-description" class="whitespace-pre-wrap"></span>
+                </div>
+
+                <div id="det-link-section" class="mt-3 p-3 bg-indigo-50 rounded border border-indigo-100 hidden">
+                    <strong class="text-gray-800 block mb-1">Plus d'information et/ou inscription:</strong>
+                    <a id="det-link" href="#" target="_blank" class="text-indigo-600 hover:underline font-medium">Cliquez-ici</a>
                 </div>
 
                 <div id="det-bilan-section" class="mt-4 pt-4 border-t border-gray-100 hidden">
@@ -426,7 +438,8 @@
             { id: "ado", label: "Ados", color: "bg-yellow-500" },
             { id: "adulte", label: "Adulte", color: "bg-purple-500" },
             { id: "parentalité", label: "Parentalité", color: "bg-pink-500" },
-            { id: "vie associative", label: "Vie associative", color: "bg-orange-500" }
+            { id: "vie associative", label: "Vie associative", color: "bg-orange-500" },
+            { id: "tous", label: "Tous", color: "bg-indigo-600" }
         ];
 
         // --- STATE ---
@@ -481,7 +494,8 @@
                     endTime: dbEvent.end_time.substring(0, 5),
                     publicCount: dbEvent.public_reached,
                     partners: dbEvent.partners,
-                    evaluation: dbEvent.evaluation
+                    evaluation: dbEvent.evaluation,
+                    linkUrl: dbEvent.link_url || ''
                 }));
 
                 updateUI();
@@ -506,7 +520,8 @@
                 // On s'assure que null est envoyé si le champ est vide
                 public_reached: evt.publicCount !== "" && evt.publicCount !== null ? parseInt(evt.publicCount) : null,
                 partners: evt.partners || null,
-                evaluation: evt.evaluation !== "" && evt.evaluation !== null ? parseInt(evt.evaluation) : null
+                evaluation: evt.evaluation !== "" && evt.evaluation !== null ? parseInt(evt.evaluation) : null,
+                link_url: evt.linkUrl || null
             };
         }
 
@@ -652,7 +667,7 @@
 
         function getEventsForDate(dateStr) {
             return state.events.filter(evt => {
-                if (state.filter !== 'tous' && evt.ageGroup !== state.filter) {
+                if (state.filter !== 'tous' && evt.ageGroup !== state.filter && evt.ageGroup !== 'tous') {
                     return false;
                 }
                 return dateStr >= evt.startDate && dateStr <= evt.endDate;
@@ -664,7 +679,7 @@
             const container = document.getElementById('quick-filters');
             container.innerHTML = '';
 
-            const allOptions = [{ id: 'tous', label: 'Tous les plannings', color: 'bg-gray-700' }, ...AGE_GROUPS];
+            const allOptions = [{ id: 'tous', label: 'Tous les plannings', color: 'bg-gray-700' }, ...AGE_GROUPS.filter(g => g.id !== 'tous')];
 
             allOptions.forEach(opt => {
                 const btn = document.createElement('button');
@@ -692,7 +707,8 @@
             container.innerHTML = '';
 
             // On reprend les couleurs mais on les adapte pour les gros boutons
-            const allOptions = [{ id: 'tous', label: 'Voir tous les plannings', color: 'bg-indigo-600 text-white' }, ...AGE_GROUPS.map(g => ({ ...g, color: g.color + ' text-white' }))];
+            const filteredGroups = AGE_GROUPS.filter(g => g.id !== 'tous');
+            const allOptions = [{ id: 'tous', label: 'Voir tous les plannings', color: 'bg-indigo-600 text-white' }, ...filteredGroups.map(g => ({ ...g, color: g.color + ' text-white' }))];
 
             allOptions.forEach(opt => {
                 const btn = document.createElement('button');
@@ -790,6 +806,7 @@
                 document.getElementById('ev-start-time').value = evt.startTime;
                 document.getElementById('ev-end-date').value = evt.endDate;
                 document.getElementById('ev-end-time').value = evt.endTime;
+                document.getElementById('ev-link').value = evt.linkUrl || '';
 
                 // Masquer la récurrence en mode édition (pour simplifier)
                 document.getElementById('recurrence-section').classList.add('hidden');
@@ -798,13 +815,18 @@
                 form.reset();
                 document.getElementById('ev-id').value = '';
                 document.getElementById('ev-description').value = '';
-                const d = new Date(state.currentDate);
-                d.setDate(1);
-                const ds = d.toISOString().split('T')[0];
-                document.getElementById('ev-start-date').value = ds;
-                document.getElementById('ev-end-date').value = ds;
+                document.getElementById('ev-link').value = '';
+                const now = new Date();
+                const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+                const hourStr = String(now.getHours()).padStart(2, '0') + ':00';
+                
+                document.getElementById('ev-start-date').value = todayStr;
+                document.getElementById('ev-start-time').value = hourStr;
+                
+                // Pré-remplir la fin 1h plus tard
+                syncEndDateTime();
 
-                // Réinitialiser la récurrence
+                // Gestion de la récurrence
                 document.getElementById('ev-recurrence').value = 'none';
                 document.getElementById('ev-recurrence-end').value = '';
                 document.getElementById('recurrence-end-container').classList.add('hidden');
@@ -813,6 +835,31 @@
 
             closeModal('modal-details');
             document.getElementById('modal-event').classList.remove('hidden');
+
+            // Configurer les écouteurs pour la synchronisation dynamique
+            document.getElementById('ev-start-date').oninput = syncEndDateTime;
+            document.getElementById('ev-start-time').oninput = syncEndDateTime;
+        }
+
+        function syncEndDateTime() {
+            const startD = document.getElementById('ev-start-date').value;
+            const startT = document.getElementById('ev-start-time').value;
+
+            if (startD && startT) {
+                const startDateObj = new Date(startD + 'T' + startT);
+                const endDateObj = new Date(startDateObj.getTime() + 60 * 60 * 1000); // +1 heure
+
+                // Heure de fin
+                document.getElementById('ev-end-time').value = String(endDateObj.getHours()).padStart(2, '0') + ':' + String(endDateObj.getMinutes()).padStart(2, '0');
+                
+                // Date de fin (format local YYYY-MM-DD)
+                const y = endDateObj.getFullYear();
+                const m = String(endDateObj.getMonth() + 1).padStart(2, '0');
+                const d = String(endDateObj.getDate()).padStart(2, '0');
+                document.getElementById('ev-end-date').value = `${y}-${m}-${d}`;
+            } else if (startD) {
+                document.getElementById('ev-end-date').value = startD;
+            }
         }
 
         async function saveEvent(e) {
@@ -830,7 +877,23 @@
                 startTime: document.getElementById('ev-start-time').value,
                 endDate: document.getElementById('ev-end-date').value,
                 endTime: document.getElementById('ev-end-time').value,
+                linkUrl: document.getElementById('ev-link').value,
             };
+
+            // Gestion de la date et l'heure de fin optionnelles
+            if (!newEvent.endDate) newEvent.endDate = newEvent.startDate;
+            if (!newEvent.endTime) {
+                const [startH, startM] = newEvent.startTime.split(':').map(Number);
+                const endDateObj = new Date(newEvent.startDate + 'T' + newEvent.startTime);
+                endDateObj.setHours(endDateObj.getHours() + 1);
+                
+                newEvent.endTime = String(endDateObj.getHours()).padStart(2, '0') + ':' + String(endDateObj.getMinutes()).padStart(2, '0');
+                // Si l'ajout d'une heure fait basculer au jour suivant, on calcule la date locale YYYY-MM-DD
+                const y = endDateObj.getFullYear();
+                const monthStr = String(endDateObj.getMonth() + 1).padStart(2, '0');
+                const dayStr = String(endDateObj.getDate()).padStart(2, '0');
+                newEvent.endDate = `${y}-${monthStr}-${dayStr}`;
+            }
 
             if (newEvent.endDate < newEvent.startDate) {
                 showMessage("La date de fin doit être après la date de début.", "error");
@@ -945,6 +1008,16 @@
                 document.getElementById('det-description').textContent = evt.description;
             } else {
                 descSec.classList.add('hidden');
+            }
+
+            // Affichage du lien
+            const linkSec = document.getElementById('det-link-section');
+            const linkEl = document.getElementById('det-link');
+            if (evt.linkUrl && evt.linkUrl.trim() !== "") {
+                linkSec.classList.remove('hidden');
+                linkEl.href = evt.linkUrl;
+            } else {
+                linkSec.classList.add('hidden');
             }
 
             // Affichage du bilan uniquement pour les rôles Admin et Bilan
